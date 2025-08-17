@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+  <title>Rogue Blocks – Combo Prototype</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="party">
+        <div class="hero" data-hero="knight">
+          <div class="portrait" style="--c:#ff5a78">K</div>
+          <div class="bars">
+            <div class="hp"><span class="fill"></span></div>
+            <div class="ult">1•2•3</div>
+          </div>
+        </div>
+        <div class="hero" data-hero="mage">
+          <div class="portrait" style="--c:#60e1ff">M</div>
+          <div class="bars">
+            <div class="hp"><span class="fill"></span></div>
+            <div class="ult">1•2•3</div>
+          </div>
+        </div>
+        <div class="hero" data-hero="priest">
+          <div class="portrait" style="--c:#7affc3">P</div>
+          <div class="bars">
+            <div class="hp"><span class="fill"></span></div>
+            <div class="ult">1•2•3</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="enemy">
+        <div class="name">Training Dummy</div>
+        <div class="hp"><span class="fill"></span></div>
+      </div>
+    </header>
+
+    <main class="arena" id="arena">
+      <!-- floating combat text appears here -->
+    </main>
+
+    <footer class="blockbar">
+      <div class="row" id="blockRow" aria-label="Skill Blocks"></div>
+      <div class="meta">
+        <div class="tip">Tap a block → auto-combines up to 3 contiguous of same color → casts skill.</div>
+        <div class="speed">
+          <label>Block spawn rate</label>
+          <input id="rate" type="range" min="300" max="2000" step="50" value="900"/>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <template id="blockTpl">
+    <button class="block" data-color="">
+      <span class="icon"></span>
+      <span class="count"></span>
+    </button>
+  </template>
+
+  <script src="game.js"></script>
+</body>
+</html>
