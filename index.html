@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
-  <title>Rogue Blocks – Combo Prototype</title>
+  <title>Rogue Blocks – Combo Prototype (+Wild/+Cursed +Drag)</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -46,18 +46,28 @@
     <footer class="blockbar">
       <div class="row" id="blockRow" aria-label="Skill Blocks"></div>
       <div class="meta">
-        <div class="tip">Tap a block → auto-combines up to 3 contiguous of same color → casts skill.</div>
-        <div class="speed">
-          <label>Block spawn rate</label>
+        <div class="tip">
+          Tap or <strong>drag</strong> across the row:
+          grabs up to <strong>3 contiguous</strong> including left+right.
+          <span class="pill wild">★ Wild</span> matches any color.
+          <span class="pill cursed">☠ Cursed</span> explodes on tap (penalty).
+        </div>
+        <div class="controls">
+          <label>Spawn</label>
           <input id="rate" type="range" min="300" max="2000" step="50" value="900"/>
+          <label>Wild%</label>
+          <input id="pWild" type="range" min="0" max="30" step="1" value="10"/>
+          <label>Cursed%</label>
+          <input id="pCursed" type="range" min="0" max="30" step="1" value="8"/>
         </div>
       </div>
     </footer>
   </div>
 
   <template id="blockTpl">
-    <button class="block" data-color="">
+    <button class="block empty" data-type="" data-color="" data-index="">
       <span class="icon"></span>
+      <span class="glyph"></span>
       <span class="count"></span>
     </button>
   </template>
