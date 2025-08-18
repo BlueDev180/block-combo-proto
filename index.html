@@ -2,34 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
-  <title>Rogue Blocks – Waves + Rewards (Wild only)</title>
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+  <title>Rogue Blocks – Clean HUD</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div id="app">
+  <!-- ===== HUD (hidden until Start) ===== -->
+  <div id="hud" class="hidden">
     <header class="topbar">
       <div class="party">
         <div class="hero" data-hero="knight">
           <div class="portrait" style="--c:#ff5a78">K</div>
-          <div class="bars">
-            <div class="hp"><span class="fill"></span></div>
-            <div class="ult">1•2•3</div>
-          </div>
+          <div class="hp"><span class="fill"></span></div>
         </div>
         <div class="hero" data-hero="mage">
           <div class="portrait" style="--c:#60e1ff">M</div>
-          <div class="bars">
-            <div class="hp"><span class="fill"></span></div>
-            <div class="ult">1•2•3</div>
-          </div>
+          <div class="hp"><span class="fill"></span></div>
         </div>
         <div class="hero" data-hero="priest">
           <div class="portrait" style="--c:#7affc3">P</div>
-          <div class="bars">
-            <div class="hp"><span class="fill"></span></div>
-            <div class="ult">1•2•3</div>
-          </div>
+          <div class="hp"><span class="fill"></span></div>
         </div>
       </div>
 
@@ -37,42 +30,34 @@
         <div class="name"><span id="waveLbl">Wave 1/6</span> – <span id="enemyName">Training Dummy</span></div>
         <div class="hp"><span class="fill"></span></div>
       </div>
+
+      <div class="actions">
+        <button id="btnTip" class="iconbtn" aria-label="Help">?</button>
+        <button id="btnSettings" class="iconbtn" aria-label="Settings">⚙︎</button>
+      </div>
     </header>
 
     <main class="arena" id="arena"></main>
 
     <footer class="blockbar">
       <div class="row" id="blockRow" aria-label="Skill Blocks"></div>
-      <div class="meta">
-        <div class="tip">
-          Tap or <strong>drag</strong> across the row:
-          grabs up to <strong>3 contiguous</strong> same-color blocks (⭐ Wild matches any).
-        </div>
-        <div class="controls">
-          <label>Spawn</label>
-          <input id="rate" type="range" min="300" max="2000" step="50" value="900"/>
-          <label>Wild%</label>
-          <input id="pWild" type="range" min="0" max="30" step="1" value="10"/>
-        </div>
-      </div>
     </footer>
   </div>
 
-  <!-- Block template -->
+  <!-- ===== Templates ===== -->
   <template id="blockTpl">
     <button class="block empty" data-type="" data-color="" data-index="">
       <span class="icon"></span>
       <span class="glyph"></span>
-      <span class="count"></span>
     </button>
   </template>
 
-  <!-- Overlays -->
-  <div id="overlay" class="overlay show">
+  <!-- ===== Overlays ===== -->
+  <div id="startOverlay" class="overlay show">
     <div class="panel">
       <h1>Rogue Blocks</h1>
-      <p>Beat 6 waves. Build power with rewards between fights.</p>
-      <button id="btnStart">Start Run</button>
+      <p class="muted">Beat 6 waves using block combos (tap or drag). Wild ⭐ matches any hero.</p>
+      <button id="btnStart" class="cta">Start Run</button>
     </div>
   </div>
 
@@ -84,16 +69,50 @@
         <button class="reward" data-reward="amp">💥 +10% Damage Amp</button>
         <button class="reward" data-reward="rate">⚡ +15% Block Rate</button>
       </div>
-      <small>Pick ONE, then continue.</small>
-      <button id="btnNextWave">Next Wave</button>
+      <small class="muted">Pick ONE, then continue.</small>
+      <button id="btnNextWave" class="cta secondary">Next Wave</button>
     </div>
   </div>
 
   <div id="endOverlay" class="overlay">
     <div class="panel">
       <h2 id="endTitle">Victory!</h2>
-      <p id="endText"></p>
-      <button id="btnRestart">Restart</button>
+      <p id="endText" class="muted"></p>
+      <button id="btnRestart" class="cta">Restart</button>
+    </div>
+  </div>
+
+  <!-- ===== Settings Drawer (hidden) ===== -->
+  <div id="drawer" class="drawer">
+    <div class="drawer-panel">
+      <header>
+        <h3>Settings</h3>
+        <button id="btnCloseDrawer" class="iconbtn">✕</button>
+      </header>
+      <div class="field">
+        <label>Block spawn interval (ms)</label>
+        <input id="rate" type="range" min="250" max="2000" step="25" value="900"/>
+        <output id="rateOut">900</output>
+      </div>
+      <div class="field">
+        <label>Wild chance (%)</label>
+        <input id="pWild" type="range" min="0" max="30" step="1" value="10"/>
+        <output id="pWildOut">10%</output>
+      </div>
+      <p class="muted small">Tip: lower spawn interval = faster block generation.</p>
+    </div>
+  </div>
+
+  <!-- ===== Quick Tip modal ===== -->
+  <div id="tipOverlay" class="overlay">
+    <div class="panel">
+      <h2>How to Play</h2>
+      <ul class="tips">
+        <li><b>Tap</b> or <b>drag</b> a block to consume up to <b>3 contiguous</b> of the same color (⭐ Wild matches any).</li>
+        <li>Combos cast hero skills: 1=small, 2=stronger, 3=ultimate.</li>
+        <li>Clear 6 waves. Pick a reward after each wave.</li>
+      </ul>
+      <button id="btnCloseTip" class="cta">Got it</button>
     </div>
   </div>
 
