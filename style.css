@@ -48,12 +48,18 @@ body{overflow:hidden}
 }
 .row{
   display:grid;grid-template-columns:repeat(8,1fr);gap:8px;
-  touch-action:none; /* prevent Safari from hijacking scroll/zoom while dragging */
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
 }
 .block{
   position:relative;height:52px;border-radius:12px;border:0;cursor:pointer;touch-action:manipulation;
   background:#151b36;color:#fff;display:grid;place-items:center;
-  box-shadow:inset 0 0 0 2px #1c2550, 0 6px 16px rgba(0,0,0,.25)
+  box-shadow:inset 0 0 0 2px #1c2550, 0 6px 16px rgba(0,0,0,.25);
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
 }
 .block .icon{
   width:34px;height:34px;border-radius:9px;background:var(--bgc,#333);display:block;
