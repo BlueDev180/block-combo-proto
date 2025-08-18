@@ -1,27 +1,26 @@
-/* Rogue Blocks – Clean HUD (Bugfix: no click double-fire, pointer-only input)
-   - Tap & drag handled with pointer events only
-   - No click handler at all (prevents iOS double-consume)
-   - Stable contiguous combos (wild doesn't bridge)
-   - Multi-wave + rewards unchanged
+/* Rogue Blocks – Clean HUD (Patched)
+   - Pointer-only input (no click); robust commit on pointerup/leave/cancel
+   - Stable contiguous combos (wild joins but never bridges mismatches)
+   - Multi-wave with rewards; modal overlays; settings drawer
 */
 (() => {
   // ===== Data =====
   const HEROES = {
-    knight:{ color:'knight', name:'Knight',
+    knight:{ name:'Knight',
       skills:{
         1:(ctx)=>({type:'dmg', value:scale(ctx,100), text:'Slash'}),
         2:(ctx)=>({type:'dmg_stun', value:scale(ctx,140), stun:2, text:'Shield Bash'}),
         3:(ctx)=>({type:'aoe', value:scale(ctx,180), text:'Whirlwind'}),
       }, hp:320
     },
-    mage:{ color:'mage', name:'Mage',
+    mage:{ name:'Mage',
       skills:{
         1:(ctx)=>({type:'dmg', value:scale(ctx,120), text:'Fireball'}),
         2:(ctx)=>({type:'slow', value:scale(ctx,90), duration:4, text:'Ice Spike'}),
         3:(ctx)=>({type:'aoe', value:scale(ctx,220), text:'Meteor'}),
       }, hp:260
     },
-    priest:{ color:'priest', name:'Priest',
+    priest:{ name:'Priest',
       skills:{
         1:(ctx)=>({type:'heal_one', value:0.25, text:'Heal'}),
         2:(ctx)=>({type:'heal_all', value:0.15, text:'Group Heal'}),
@@ -83,11 +82,10 @@
   const $btnTip = document.getElementById('btnTip');
   const $btnCloseTip = document.getElementById('btnCloseTip');
 
-  // ===== Build row (no click listeners at all) =====
+  // ===== Build row (no click listeners) =====
   for (let i=0;i<state.blockRow.length;i++){
     const node = $tpl.content.firstElementChild.cloneNode(true);
     node.dataset.index = i;
-    // we’ll handle taps & drags via pointer events on the row
     $row.appendChild(node);
   }
 
@@ -147,6 +145,7 @@
       { key:'priest', hp:HEROES.priest.hp, max:HEROES.priest.hp },
     ];
     for (const h of state.heroes) setHeroHP(h.key, h.hp/h.max);
+
     state.blockRow = Array(8).fill(null);
     for (let i=0;i<$row.children.length;i++) renderBlock(i);
     for (let i=0;i<5;i++) spawnOneBlock();
@@ -173,7 +172,7 @@
     $endText.textContent = `You reached Wave ${state.wave}. Try a different reward path!`;
     show($endOverlay);
   }
-  function showHUD(flag){ document.getElementById('hud').classList.toggle('hidden', !flag); }
+  function showHUD(flag){ $hud.classList.toggle('hidden', !flag); }
 
   // ===== Enemy model/UI =====
   function makeEnemy(wave){
@@ -214,7 +213,6 @@
   function nearestColorForWild(idx){
     const L = state.blockRow[idx-1]; if (L && L.kind==='hero') return L.heroKey;
     const R = state.blockRow[idx+1]; if (R && R.kind==='hero') return R.heroKey;
-    // fallback: most common color in row; else knight
     const counts={}; for (const it of state.blockRow) if (it?.kind==='hero') counts[it.heroKey]=(counts[it.heroKey]||0)+1;
     let best=null,max=-1; for (const k in counts) if (counts[k]>max){max=counts[k];best=k;}
     return best || 'knight';
@@ -235,7 +233,7 @@
     let r = seedIndex+1;
     while (r<arr.length && picked.length<maxN && canJoin(targetColor, arr[r])) { picked.push(r); r++; }
 
-    // NOTE: We never skip over mismatches and wilds don't bridge gaps.
+    // Never skip mismatches; wild never bridges across different colors
     return picked;
   }
   function targetColorAtIndex(idx){
@@ -243,38 +241,52 @@
     return it.kind==='hero' ? it.heroKey : nearestColorForWild(idx);
   }
 
-  // ===== Pointer-only input (tap & drag) =====
-  const drag={active:false, pointerId:null, seedIndex:-1, targetColor:null, picked:[]};
+  // ===== Pointer-only input (robust on iOS) =====
+  const drag = { active:false, pointerId:null, seedIndex:-1, targetColor:null, picked:[] };
 
   function indexFromPointer(ev){
     const el = ev.target.closest?.('.block');
-    if (el && el.parentElement===$row) return +el.dataset.index;
+    if (el && el.parentElement === $row) return +el.dataset.index;
     const rect = $row.getBoundingClientRect();
-    if (ev.clientX==null) return -1;
-    if (ev.clientY<rect.top || ev.clientY>rect.bottom) return -1;
-    const colW = rect.width/state.blockRow.length;
-    const idx = Math.floor((ev.clientX-rect.left)/colW);
-    return (idx<0||idx>=state.blockRow.length)?-1:idx;
+    if (ev.clientX == null) return -1;
+    if (ev.clientY < rect.top || ev.clientY > rect.bottom) return -1;
+    const colW = rect.width / state.blockRow.length;
+    const idx = Math.floor((ev.clientX - rect.left) / colW);
+    return (idx < 0 || idx >= state.blockRow.length) ? -1 : idx;
   }
   function showPreview(indices, seedIndex){
     for (const el of $row.children) el.classList.remove('preview','preview-core');
     for (const i of indices) $row.children[i].classList.add('preview');
-    if (seedIndex>=0) $row.children[seedIndex].classList.add('preview-core');
+    if (seedIndex >= 0) $row.children[seedIndex].classList.add('preview-core');
   }
-  function clearPreview(){
-    for (const el of $row.children) el.classList.remove('preview','preview-core');
+  function clearPreview(){ for (const el of $row.children) el.classList.remove('preview','preview-core'); }
+
+  function commitDrag(){
+    if (!drag.active) return;
+    clearPreview();
+
+    if (state.running){
+      for (const i of drag.picked){ state.blockRow[i] = null; renderBlock(i); }
+      compactRow();
+      castSkill(drag.targetColor, drag.picked.length);
+      if (navigator.vibrate) try{ navigator.vibrate(8); }catch{}
+    }
+
+    drag.active=false; drag.pointerId=null; drag.seedIndex=-1; drag.picked=[];
   }
 
-  // Start pointer
+  // start
   $row.addEventListener('pointerdown', (ev)=>{
     if (!state.running) return;
-    // block multitouch / second finger
-    if (drag.active) return;
+    if (drag.active) return;               // block multi-touch
     drag.pointerId = ev.pointerId;
 
-    const idx = indexFromPointer(ev); if (idx<0 || !state.blockRow[idx]) return;
+    const idx = indexFromPointer(ev);
+    if (idx < 0 || !state.blockRow[idx]) return;
 
-    drag.active=true; drag.seedIndex=idx; drag.targetColor=targetColorAtIndex(idx);
+    drag.active = true;
+    drag.seedIndex = idx;
+    drag.targetColor = targetColorAtIndex(idx);
     drag.picked = buildComboFromSeed(idx, drag.targetColor, 3);
     showPreview(drag.picked, drag.seedIndex);
 
@@ -282,36 +294,25 @@
     $row.setPointerCapture?.(ev.pointerId);
   });
 
-  // Move pointer
+  // move
   $row.addEventListener('pointermove', (ev)=>{
-    if (!drag.active || ev.pointerId!==drag.pointerId) return;
+    if (!drag.active /*|| ev.pointerId!==drag.pointerId*/) return;
     if (!state.running) { clearPreview(); return; }
     if (!state.blockRow[drag.seedIndex]) { clearPreview(); return; }
 
-    // keep seed fixed for consistent UX
     drag.targetColor = targetColorAtIndex(drag.seedIndex);
     drag.picked = buildComboFromSeed(drag.seedIndex, drag.targetColor, 3);
     showPreview(drag.picked, drag.seedIndex);
   });
 
-  // End pointer (commit tap/drag)
-  $row.addEventListener('pointerup', (ev)=>{
-    if (!drag.active || ev.pointerId!==drag.pointerId) return;
-    clearPreview();
-
-    if (state.running){
-      for (const i of drag.picked){ state.blockRow[i]=null; renderBlock(i); }
-      compactRow(); castSkill(drag.targetColor, drag.picked.length);
-      if (navigator.vibrate) try{ navigator.vibrate(8); }catch{}
-    }
-
-    drag.active=false; drag.pointerId=null; drag.seedIndex=-1; drag.picked=[];
+  // end (row + global + leave/cancel)
+  $row.addEventListener('pointerup', commitDrag);
+  $row.addEventListener('pointerleave', commitDrag);
+  $row.addEventListener('pointerout', (ev)=>{
+    if (!ev.relatedTarget || !ev.currentTarget.contains(ev.relatedTarget)) commitDrag();
   });
-
-  // Cancel (pointercancel / leaving the row)
-  $row.addEventListener('pointercancel', ()=>{
-    clearPreview(); drag.active=false; drag.pointerId=null; drag.seedIndex=-1; drag.picked=[];
-  });
+  window.addEventListener('pointerup', commitDrag);
+  window.addEventListener('pointercancel', commitDrag);
 
   // ===== Combat =====
   function castSkill(heroKey, count){
@@ -344,6 +345,7 @@
       case 'revive': floatText('Revive ready','#7affc3'); break;
     }
   }
+
   function lowestAllyIndex(){
     let idx=-1, frac=1e9;
     for (let i=0;i<state.heroes.length;i++){
@@ -394,8 +396,7 @@
       case 'amp': state.damageAmp = +(state.damageAmp*1.10).toFixed(3); break;
       case 'rate':
         state.spawnEvery = Math.max(250, Math.round(state.spawnEvery*0.85));
-        document.getElementById('rate').value = state.spawnEvery;
-        document.getElementById('rateOut').textContent = String(state.spawnEvery);
+        $rate.value = state.spawnEvery; $rateOut.textContent = String(state.spawnEvery);
         break;
     }
   }
