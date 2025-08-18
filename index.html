@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
-  <title>Rogue Blocks – Combo Prototype (+Wild/+Cursed +Drag)</title>
+  <title>Rogue Blocks – Waves + Rewards (Wild only)</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -34,36 +34,31 @@
       </div>
 
       <div class="enemy">
-        <div class="name">Training Dummy</div>
+        <div class="name"><span id="waveLbl">Wave 1/6</span> – <span id="enemyName">Training Dummy</span></div>
         <div class="hp"><span class="fill"></span></div>
       </div>
     </header>
 
-    <main class="arena" id="arena">
-      <!-- floating combat text appears here -->
-    </main>
+    <main class="arena" id="arena"></main>
 
     <footer class="blockbar">
       <div class="row" id="blockRow" aria-label="Skill Blocks"></div>
       <div class="meta">
         <div class="tip">
           Tap or <strong>drag</strong> across the row:
-          grabs up to <strong>3 contiguous</strong> including left+right.
-          <span class="pill wild">★ Wild</span> matches any color.
-          <span class="pill cursed">☠ Cursed</span> explodes on tap (penalty).
+          grabs up to <strong>3 contiguous</strong> same-color blocks (⭐ Wild matches any).
         </div>
         <div class="controls">
           <label>Spawn</label>
           <input id="rate" type="range" min="300" max="2000" step="50" value="900"/>
           <label>Wild%</label>
           <input id="pWild" type="range" min="0" max="30" step="1" value="10"/>
-          <label>Cursed%</label>
-          <input id="pCursed" type="range" min="0" max="30" step="1" value="8"/>
         </div>
       </div>
     </footer>
   </div>
 
+  <!-- Block template -->
   <template id="blockTpl">
     <button class="block empty" data-type="" data-color="" data-index="">
       <span class="icon"></span>
@@ -71,6 +66,36 @@
       <span class="count"></span>
     </button>
   </template>
+
+  <!-- Overlays -->
+  <div id="overlay" class="overlay show">
+    <div class="panel">
+      <h1>Rogue Blocks</h1>
+      <p>Beat 6 waves. Build power with rewards between fights.</p>
+      <button id="btnStart">Start Run</button>
+    </div>
+  </div>
+
+  <div id="rewardOverlay" class="overlay">
+    <div class="panel">
+      <h2>Choose a Reward</h2>
+      <div class="rewardGrid">
+        <button class="reward" data-reward="heal">💚 Heal Party 25%</button>
+        <button class="reward" data-reward="amp">💥 +10% Damage Amp</button>
+        <button class="reward" data-reward="rate">⚡ +15% Block Rate</button>
+      </div>
+      <small>Pick ONE, then continue.</small>
+      <button id="btnNextWave">Next Wave</button>
+    </div>
+  </div>
+
+  <div id="endOverlay" class="overlay">
+    <div class="panel">
+      <h2 id="endTitle">Victory!</h2>
+      <p id="endText"></p>
+      <button id="btnRestart">Restart</button>
+    </div>
+  </div>
 
   <script src="game.js"></script>
 </body>
